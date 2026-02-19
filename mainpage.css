@@ -1,0 +1,89 @@
+body {
+    background-color: #14141a;
+    color: #d8e1ee;
+    font-family: 'Georgia', sans-serif;
+    padding: 16px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 55px;
+}
+
+#analyze_button {
+    padding-left: 10px;
+    color:#d8e1ee;
+    background-color: red;
+    border:2px solid #313030;
+    padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    display: block;
+    margin: auto;
+    margin-top: 16px;
+    border-radius: 4px;
+}
+
+#user-context-boxes {
+    display: flex;
+    margin:auto;
+    justify-content: space-evenly;
+}
+
+h2 {
+    margin-left: 10px
+}
+
+.context-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-left: 20px;
+}
+
+#details_dropdown {
+    margin-left: 20px;
+    margin-top: 16px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+    background-color: #313030;
+    border-radius: 4px;
+}
+
+.risk-signals {
+    margin-left: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.risk-row {
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    display: flex;
+    align-items: center;
+    background-color: #313030;
+    white-space: nowrap;
+    border-radius: 4px;
+}
+
+.risk-row input{
+    margin-left: 4px;
+    background-color: #313030;
+    width: 100%
+}
+
+#full-body {
+    background-color: #313030;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+}
+
+#summary_text {
+    text-align: center;
+}

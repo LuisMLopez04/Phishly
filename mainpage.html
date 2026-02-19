@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head> 
+        <meta charset="UTF-8">
+        <title>Phishly extension</title>
+        <link rel="stylesheet" href = "mainpage.css">
+    </head>
+    <body>
+        <div id ="phishly-heading">
+            <h1>Phishly</h1>
+        </div>
+        <div id ="risk-signal-heading">
+            <h2>Risk Signals:</h2>
+        </div>
+        <div class="risk-signals">
+                <div class = "risk-row">
+                Sender(Email/Phone Number): <input type = "text" id = "sender"/>
+                </div>
+                <div class = "risk-row">
+                Subject: <input type = "text" id = "subject"/>
+                </div>
+                <div class = "risk-row">
+                Suspicious Links: <input type = "text" id = "sus_links"/>
+                </div>
+                <div class = "risk-row">
+                Suspicious Texts: <input type = "text" id = "sus_texts"/>
+                </div>
+        </div>
+        <div id ="user-context-heading">
+            <h2>User Context Signals:</h2>
+        </div>
+        <div id = "user-context-boxes">
+            <div class = "context-column">
+                <div>
+                    <input type = "checkbox" id = "urgent_checkbox"/>
+                    <label for ="urgent_checkbox">Urgent</label>  
+                </div>
+                
+                <div>
+                    <input type = "checkbox" id = "une_send"/>
+                    <label for = "une_send">Unexpected Sender</label>
+                </div>
+
+                <div>
+                    <input type = "checkbox" id = "asks_login"/>
+                    <label for = "asks_login">Asks to login</label>        
+                </div>
+            </div>
+            <div class = "context-column">
+                <div>
+                    <input type = "checkbox" id = "sens_info"/>
+                    <label for = "sens_info">Sensitive info</label>
+                </div>
+                
+                <div>
+                    <input type = "checkbox" id = "une_att"/>
+                    <label for = "une_att">Unexpected Attachment</label> 
+                </div>
+        
+                <div>
+                    <input type = "checkbox" id = "qr_code"/>
+                    <label for = "qr_code">QR Code</label>
+                </div>
+            </div>
+        </div>
+        <div>
+            <details id="details_dropdown">
+                <summary>Advanced Mode</summary>
+                <div>
+                    <p id ="summary_text">You are about to paste the full content of an email. This information may contain sensitive or personal data.
+                        Phishly analyzes this text locally in your browser and does not store or transmit it. However, you should only proceed if you are comfortable sharing this content.
+                        This feature is optional and intended for advanced analysis.
+                    </p>
+                </div>
+                <textarea id="full-body" placeholder="Body:"></textarea>
+            </details>
+        </div>
+        <div>
+            <button id="analyze_button" type = "button">Analyze</button>
+        </div>
+        
+    </body>
+</html>

@@ -82,8 +82,25 @@ h2 {
     width: 100%;
     box-sizing: border-box;
     resize: none;
+    color: #d8e1ee;
 }
 
 #summary_text {
     text-align: center;
+}
+
+#sender {
+    color: #d8e1ee;
+}
+
+#subject {
+    color: #d8e1ee;
+}
+
+#sus_links {
+    color: #d8e1ee;
+}
+
+#sus_texts {
+    color: #d8e1ee;
 }

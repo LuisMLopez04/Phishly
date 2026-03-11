@@ -1,0 +1,111 @@
+body {
+    background-color: #14141a;
+    color: #d8e1ee;
+    font-family: 'Georgia', sans-serif;
+    padding: 16px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 55px;
+}
+
+.signal-row {
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    display: flex;
+    align-items: center;
+    background-color: #313030;
+    white-space: nowrap;
+    border-radius: 4px;
+}
+
+.signal-breakdown {
+    margin-left: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+h2 {
+    margin-left: 10px;
+}
+
+.risk-meter-bar {
+    width: 100%;
+    height: 20px;
+    border-radius: 999px;
+    background: linear-gradient(to right, #22c55e, #eab308, #ef4444)
+}
+.risk-meter-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: #666;
+}
+
+.risk-meter-needle {
+  position: absolute;
+  top: -6px;
+  width: 4px;
+  height: 32px;
+  background: #1e1e1e;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: left 0.6s ease;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+#go_back {
+    padding-left: 10px;
+    color:#d8e1ee;
+    background-color:#666;
+    border:2px solid #313030;
+    padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    display: block;
+    margin: auto;
+    margin-top: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#user-context-breakdown-text {
+    margin-left: 15px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    display: flex;
+    align-items: center;
+    background-color: #313030;
+    white-space: nowrap;
+    border-radius: 4px;
+}
+
+#what-this-means-text {
+    margin-left: 15px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    display: flex;
+    align-items: center;
+    background-color: #313030;
+    white-space: nowrap;
+    border-radius: 4px;
+}
+
+.red    { background: #ef4444; }
+.yellow { background: #eab308; }
+.green  { background: #22c55e; }

@@ -22,6 +22,11 @@ h1 {
     margin: auto;
     margin-top: 16px;
     border-radius: 4px;
+    cursor: pointer;
+}
+
+#details_dropdown {
+    cursor: pointer;
 }
 
 #user-context-boxes {
@@ -74,7 +79,7 @@ h2 {
 .risk-row input{
     margin-left: 4px;
     background-color: #313030;
-    width: 100%
+    width: 100%;
 }
 
 #full-body {
@@ -103,4 +108,13 @@ h2 {
 
 #sus_texts {
     color: #d8e1ee;
+}
+
+
+input[type="checkbox"] {
+    cursor:pointer;
+}
+
+label {
+    cursor: pointer;
 }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <meta charset= "UTF-8">
+        <title> Findings</title>
+        <link rel ="stylesheet" href = "resultpage.css">
+    </head>
+    <body>
+        <div id = "result-page-heading">
+            <h1>Findings</h1>
+        </div>
+        <div class = "risk-meter">
+            <div class = "risk-meter-labels">
+                <span>Low</span>
+                <span>Moderate</span>
+                <span>High</span>
+                <span>Critical</span>
+            </div>
+            <div class = "risk-meter-bar">
+                <div class = "risk-meter-fill" id="risk-fill"></div>
+                <div class = "risk-meter-needle" id="risk-needle"></div>
+            </div>
+        </div>
+        <h2>
+            Signals Breakdowns:
+        </h2>
+        <div class = "signal-breakdown">
+            <div class= "signal-row">
+                <div class="indicator red"></div>
+                <div id ="sender">
+                    Sender X: Explain why the phone number/domain is suspicious or not
+                </div>
+            </div>
+             <div class= "signal-row">
+                <div class="indicator red"></div>
+                <div id = "subject">
+                    Subject: Explain why the subject is suspicious
+                </div>
+             </div>
+            <div class= "signal-row">
+                <div class="indicator red"></div>
+                <div id="Suspicious Links">
+                    X Suspicious Links Detected: Explan if and why suspicious links
+                </div>
+            </div>
+            <div class= "signal-row">
+                <div class="indicator red"></div>
+                <div id="Suspicious Texts">
+                    X Suspicious Texts Detected: Explain if and why suspicious texts
+                </div>
+            </div>
+        </div>
+        <h2>
+            User-Provided Context Summary:
+        </h2>
+        <p id ="user-context-breakdown-text">
+            Recap on what the checkboxes the user selected and what each box means in the context of the assessment.
+        </p>
+        <h2>
+            What this Means:
+        </h2>
+        <p id ="what-this-means-text">
+            2-3 sentences in plain-language for synthesizing the signals. (Non-technical user explanation)        </p>
+        <div>
+            <button id="go_back" type = "button">Go back</button>
+        </div>
+    </body>
+</html>

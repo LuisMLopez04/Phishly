@@ -1,0 +1,13 @@
+numpy
+pandas
+scikit-learn
+joblib
+# For DistilBERT (phishing_distilbert.py)
+torch
+transformers
+accelerate
+
+# For LightGBM + SHAP (phishing_lgbm_shap.py)
+lightgbm
+shap
+scipy

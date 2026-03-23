@@ -95,19 +95,81 @@ h2 {
 }
 
 #sender {
+    margin-left: 4px;
+    background-color: #313030;
     color: #d8e1ee;
+    width: 100%;
+    border: 1px solid #555;
+    outline: none;
+    font-family: 'Georgia', sans-serif;
+    font-size: inherit;
+    padding: 2px 4px;
+    box-sizing: border-box;
+    border-radius: 3px;
+}
+
+#sender:focus {
+    border: 1px solid #d8e1ee;
 }
 
 #subject {
+    margin-left: 4px;
+    background-color: #313030;
     color: #d8e1ee;
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    border: 1px solid #555;
+    outline: none;
+    font-family: 'Georgia', sans-serif;
+    font-size: inherit;
+    padding: 2px 4px;
+    box-sizing: border-box;
+    border-radius: 3px;
+}
+
+#subject:focus {
+    border: 1px solid #d8e1ee;
 }
 
 #sus_links {
+    margin-left: 4px;
+    background-color: #313030;
     color: #d8e1ee;
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    border: 1px solid #555;
+    outline: none;
+    font-family: 'Georgia', sans-serif;
+    font-size: inherit;
+    padding: 2px 4px;
+    box-sizing: border-box;
+    border-radius: 3px;
+}
+
+#sus_links:focus {
+    border: 1px solid #d8e1ee;
 }
 
 #sus_texts {
+    margin-left: 4px;
+    background-color: #313030;
     color: #d8e1ee;
+    width: 100%;
+    resize: none;
+    overflow: hidden;
+    border: 1px solid #555;
+    outline: none;
+    font-family: 'Georgia', sans-serif;
+    font-size: inherit;
+    padding: 2px 4px;
+    box-sizing: border-box;
+    border-radius: 3px;
+}
+
+#sus_texts:focus {
+    border: 1px solid #d8e1ee;
 }
 
 

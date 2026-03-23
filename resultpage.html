@@ -11,14 +11,16 @@
         </div>
         <div class = "risk-meter">
             <div class = "risk-meter-labels">
-                <span>Low</span>
+                <span>Low (0%)</span>
                 <span>Moderate</span>
                 <span>High</span>
-                <span>Critical</span>
+                <span>Critical (100%)</span>
             </div>
             <div class = "risk-meter-bar">
                 <div class = "risk-meter-fill" id="risk-fill"></div>
-                <div class = "risk-meter-needle" id="risk-needle"></div>
+                <div class = "risk-meter-needle" id="risk-needle">
+                    <span class="needle-label" id="needle-label">0%</span>
+                </div>
             </div>
         </div>
         <h2>
@@ -26,27 +28,19 @@
         </h2>
         <div class = "signal-breakdown">
             <div class= "signal-row">
-                <div class="indicator red"></div>
                 <div id ="sender">
-                    Sender X: Explain why the phone number/domain is suspicious or not
                 </div>
             </div>
              <div class= "signal-row">
-                <div class="indicator red"></div>
                 <div id = "subject">
-                    Subject: Explain why the subject is suspicious
                 </div>
              </div>
             <div class= "signal-row">
-                <div class="indicator red"></div>
                 <div id="Suspicious Links">
-                    X Suspicious Links Detected: Explan if and why suspicious links
                 </div>
             </div>
             <div class= "signal-row">
-                <div class="indicator red"></div>
                 <div id="Suspicious Texts">
-                    X Suspicious Texts Detected: Explain if and why suspicious texts
                 </div>
             </div>
         </div>
@@ -64,5 +58,6 @@
         <div>
             <button id="go_back" type = "button">Go back</button>
         </div>
+        <script src ="resultpage.js"></script>
     </body>
 </html>

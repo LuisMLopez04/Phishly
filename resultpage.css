@@ -11,15 +11,13 @@ h1 {
 }
 
 .signal-row {
-    padding-left: 4px;
-    padding-right: 4px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    display: flex;
-    align-items: center;
+    padding: 8px;
+    display: block;
     background-color: #313030;
-    white-space: nowrap;
     border-radius: 4px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .signal-breakdown {
@@ -33,11 +31,17 @@ h2 {
     margin-left: 10px;
 }
 
+.risk-meter {
+    margin: 20px 15px;
+    padding-top: 10px;
+}
+
 .risk-meter-bar {
     width: 100%;
     height: 20px;
     border-radius: 999px;
-    background: linear-gradient(to right, #22c55e, #eab308, #ef4444)
+    background: linear-gradient(to right, #22c55e, #eab308, #ef4444);
+    position: relative;
 }
 .risk-meter-labels {
     display: flex;
@@ -47,22 +51,32 @@ h2 {
     color: #666;
 }
 
+.risk-meter-labels span:first-child {
+    text-align: left;
+}
+
+.risk-meter-labels span:last-child {
+    text-align: right;
+}
+
+
 .risk-meter-needle {
-  position: absolute;
-  top: -6px;
-  width: 4px;
-  height: 32px;
-  background: #1e1e1e;
-  border-radius: 2px;
-  transform: translateX(-50%);
-  transition: left 0.6s ease;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 32px;
+    background: #d8e1ee;
+    border-radius: 2px;
+    transition: left 0.6s ease;
 }
 
 .indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
 }
 
 #go_back {
@@ -82,28 +96,42 @@ h2 {
 
 #user-context-breakdown-text {
     margin-left: 15px;
-    padding-left: 4px;
-    padding-right: 4px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    display: flex;
-    align-items: center;
+    padding: 8px;
     background-color: #313030;
-    white-space: nowrap;
     border-radius: 4px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 #what-this-means-text {
     margin-left: 15px;
-    padding-left: 4px;
-    padding-right: 4px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    display: flex;
-    align-items: center;
+    padding: 8px;
     background-color: #313030;
-    white-space: nowrap;
     border-radius: 4px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.needle-label {
+    position: absolute;
+    top: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: #d8e1ee;
+    white-space: nowrap;
+}
+
+.signal-row > div:last-child {
+    min-width: 0;
+    flex: 1;
+}
+
+.signal-row h3 {
+    margin-top: 0;
+    margin-bottom: 4px;
 }
 
 .red    { background: #ef4444; }

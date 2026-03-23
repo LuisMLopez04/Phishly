@@ -12,18 +12,19 @@
         <div id ="risk-signal-heading">
             <h2>Risk Signals:</h2>
         </div>
+        
         <div class="risk-signals">
                 <div class = "risk-row">
                 Sender(Email/Phone Number): <input type = "text" id = "sender"/>
                 </div>
                 <div class = "risk-row">
-                Subject: <input type = "text" id = "subject"/>
+                Subject: <textarea id="subject" rows ="1"></textarea>
                 </div>
                 <div class = "risk-row">
-                Suspicious Links: <input type = "text" id = "sus_links"/>
+                Suspicious Links: <textarea id="sus_links" rows="1" placeholder="One link per line..."></textarea>
                 </div>
                 <div class = "risk-row">
-                Suspicious Texts: <input type = "text" id = "sus_texts"/>
+                Suspicious Texts: <textarea id="sus_texts" rows="1" placeholder="Paste suspicious text snippets here..."></textarea>
                 </div>
         </div>
         <div id ="user-context-heading">
@@ -33,7 +34,7 @@
             <div class = "context-column">
                 <div>
                     <input type = "checkbox" id = "urgent_checkbox"/>
-                    <label for ="urgent_checkbox">Urgent</label>  
+                    <label for ="urgent_checkbox">Urgent Language</label>  
                 </div>
                 
                 <div>
@@ -78,6 +79,6 @@
         <div>
             <button id="analyze_button" type = "button">Analyze</button>
         </div>
-        
+        <script src ="mainpage.js"></script>
     </body>
 </html>

@@ -1,302 +1,308 @@
 """
-DistilBERT-based phishing classifier. Train on Data.csv and run inference with
-optional token-level explanations (attention to [CLS]).
+phishing_distilbert.py
+Trains a DistilBERT-based phishing classifier and saves it to ./model/
+
+Usage:
+    python3 phishing_distilbert.py train
+    python3 phishing_distilbert.py explain --subject "..." --body "..."
 """
+
 import argparse
-from pathlib import Path
-from typing import List, Optional, Tuple
-
-import numpy as np
+import os
+import re
 import pandas as pd
+import numpy as np
+from pathlib import Path
+from typing import List, Dict
+
 import torch
-from sklearn.metrics import classification_report, roc_auc_score
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    Trainer,
-    TrainingArguments,
-    EvalPrediction,
+    DistilBertTokenizerFast,
+    DistilBertForSequenceClassification,
+    get_linear_schedule_with_warmup,
 )
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, roc_auc_score
+from torch.optim import AdamW
 
 
-DATA_FILE = Path("Data.csv")
-MODEL_DIR = Path("distilbert_phishing")
-DEFAULT_MODEL_NAME = "distilbert-base-uncased"
-MAX_LENGTH = 512
+ARCHIVE_DIR  = Path("archive")
+MODEL_DIR    = Path("model")
+MODEL_DIR.mkdir(exist_ok=True)
+
+SPAM_ONLY_DATASETS = {"Enron.csv", "CEAS_08.csv", "SpamAssasin.csv"}
+
+MAX_LEN      = 256   # token limit per email (DistilBERT max is 512)
+BATCH_SIZE   = 16
+EPOCHS       = 3
+LEARNING_RATE = 2e-5
+DEVICE       = torch.device("cpu")  # CPU only — works fine with 32GB RAM
 
 
-def load_data(
-    csv_path: Path = DATA_FILE,
-    max_samples: Optional[int] = None,
-) -> pd.DataFrame:
-    """Load dataset; optionally limit rows for faster training."""
-    if not csv_path.exists():
-        raise FileNotFoundError(f"Could not find data file at {csv_path.resolve()}")
+# ─── DATASET ────────────────────────────────────────────────
 
-    df = pd.read_csv(csv_path)
-    expected = {"sender", "receiver", "date", "subject", "body", "label", "urls"}
-    missing = expected.difference(df.columns)
-    if missing:
-        raise ValueError(f"Missing expected columns: {missing}")
-
-    df = df.dropna(subset=["label", "body", "subject"])
-    df["label"] = df["label"].astype(int)
-
-    if max_samples is not None:
-        df = df.sample(n=min(max_samples, len(df)), random_state=42)
-    return df
-
-
-class PhishingDataset(Dataset):
-    """PyTorch Dataset: (subject + body) -> tokenized input for DistilBERT."""
-
-    def __init__(
-        self,
-        texts: List[str],
-        labels: List[int],
-        tokenizer,
-        max_length: int = MAX_LENGTH,
-    ):
-        self.texts = texts
-        self.labels = labels
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-
-    def __len__(self) -> int:
-        return len(self.texts)
-
-    def __getitem__(self, idx: int):
-        text = self.texts[idx]
-        if not isinstance(text, str):
-            text = str(text) if text else ""
-        enc = self.tokenizer(
-            text,
+class EmailDataset(Dataset):
+    def __init__(self, texts: List[str], labels: List[int], tokenizer, max_len: int):
+        self.encodings = tokenizer(
+            texts,
             truncation=True,
-            max_length=self.max_length,
-            padding="max_length",
+            padding=True,
+            max_length=max_len,
             return_tensors="pt",
         )
+        self.labels = torch.tensor(labels, dtype=torch.long)
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
         return {
-            "input_ids": enc["input_ids"].squeeze(0),
-            "attention_mask": enc["attention_mask"].squeeze(0),
-            "labels": torch.tensor(self.labels[idx], dtype=torch.long),
+            "input_ids":      self.encodings["input_ids"][idx],
+            "attention_mask": self.encodings["attention_mask"][idx],
+            "labels":         self.labels[idx],
         }
 
 
-def compute_metrics(p: EvalPrediction) -> dict:
-    logits = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
-    preds = np.argmax(logits, axis=1)
-    # logits -> softmax for AUC
-    exp_logits = np.exp(logits - logits.max(axis=1, keepdims=True))
-    probs = (exp_logits / exp_logits.sum(axis=1, keepdims=True))[:, 1]
-    acc = (preds == p.label_ids).mean()
-    try:
-        auc = roc_auc_score(p.label_ids, probs)
-    except Exception:
-        auc = 0.0
-    return {"accuracy": float(acc), "roc_auc": float(auc)}
+# ─── DATA LOADING ───────────────────────────────────────────
+
+def _load_single_csv(path: Path) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    expected = {"subject", "body", "label"}
+    if expected.difference(df.columns):
+        raise ValueError(f"{path.name} missing columns")
+    df = df.dropna(subset=["label", "body", "subject"])
+    df["label"] = df["label"].astype(int)
+    if path.name in SPAM_ONLY_DATASETS:
+        df = df[df["label"] == 0]
+    return df[["subject", "body", "label"]]
 
 
-def train_model(
-    csv_path: Path = DATA_FILE,
-    model_dir: Path = MODEL_DIR,
-    model_name: str = DEFAULT_MODEL_NAME,
-    max_samples: Optional[int] = None,
-    train_batch_size: int = 16,
-    eval_batch_size: int = 32,
-    num_epochs: int = 2,
-    learning_rate: float = 2e-5,
-    val_ratio: float = 0.1,
-) -> None:
-    df = load_data(csv_path, max_samples=max_samples)
-    df["text"] = (df["subject"].fillna("") + " " + df["body"].fillna("")).str.strip()
-    texts = df["text"].tolist()
+def _build_consumer_clean_emails() -> pd.DataFrame:
+    samples = [
+        ("Your October statement is ready", "Hi John, your statement for October is now available. Log in to your account at any time to view it."),
+        ("Your monthly statement is ready", "Your statement for this month is now available in your account. No action is required."),
+        ("November statement available", "Hi Sarah, your November account statement is ready to view. Total balance: $1,204.50."),
+        ("Your statement is available online", "Your latest statement is now available. You can view it any time by logging into your account."),
+        ("Monthly account statement", "Your monthly statement is now available. Log in to view your full account details and transaction history."),
+        ("Your September statement", "Your account statement for September is ready. You can download it as a PDF from your account page."),
+        ("Statement ready for download", "Your account statement is ready. Log in to download your statement for the period ending October 31."),
+        ("Quarterly statement available", "Your quarterly account statement covering July through September is now available to view online."),
+        ("Your bank statement is ready", "Your statement for account ending in 4521 is now available. Log in to view or download it."),
+        ("Annual account summary", "Your annual account summary for 2024 is now ready. It includes all transactions from January through December."),
+        ("Your account summary", "Here is a summary of your account activity for the past 30 days. No unusual activity was detected."),
+        ("Your account activity for November", "Here is your account summary for November. Total transactions: 4. No unusual activity was detected."),
+        ("Account settings updated", "Your account settings were successfully updated. If you did not make this change please contact us."),
+        ("Your account is ready", "Your new account has been created and is ready to use. You can log in at any time."),
+        ("Account notification", "This is a notification from your account. Your direct deposit of $1,240.00 has been received."),
+        ("Welcome to your account", "Your account has been set up successfully. You can now log in and start using all features."),
+        ("Your direct deposit was received", "A direct deposit of $2,150.00 was received and added to your account today."),
+        ("Deposit confirmed", "Your deposit of $500.00 has been confirmed and will be available in your account within one business day."),
+        ("Password changed successfully", "Your password was successfully updated. If you did not make this change, please contact us immediately."),
+        ("Your password has been updated", "This email confirms your password was changed. If this was not you, contact our support team right away."),
+        ("Two-factor authentication enabled", "You have successfully enabled two-factor authentication on your account. Your account is now more secure."),
+        ("Login from new device", "We noticed a login to your account from a new device. If this was you, no action is needed."),
+        ("Your order has shipped", "Good news — your order #4821 has shipped and is on its way. Expected delivery: Thursday."),
+        ("Your package was delivered", "Your package was delivered today at 3:42 PM and left at the front door."),
+        ("Your delivery is scheduled", "Your delivery is confirmed for Saturday between 9 AM and 1 PM. Someone will need to be home to sign."),
+        ("Order confirmation #8823", "Thank you for your order. We have received your order and will send a shipping confirmation shortly."),
+        ("Shipping confirmation", "Your order has been shipped via UPS. Your tracking number is 1Z999AA10123456784."),
+        ("Out for delivery today", "Your package is out for delivery today. Estimated arrival: between 2 PM and 6 PM."),
+        ("Refund processed", "Your refund of $45.99 has been processed and will appear in your account within 5 business days."),
+        ("Your bill is ready to view", "Your latest bill is now available online. The amount due this month is shown in your account."),
+        ("Your bill for December", "Your December bill is now available. Total amount due: $89.99. Payment is due by December 28."),
+        ("Payment received", "We have received your payment of $120.00. Thank you — your account is up to date."),
+        ("Subscription payment received", "We received your payment. Thank you — your access continues uninterrupted."),
+        ("Invoice #2041 from Acme Co", "Please find your invoice attached. Payment is due within 30 days. Thank you for your business."),
+        ("Payment confirmation", "Your payment of $250.00 was successfully processed on November 15. Thank you."),
+        ("Automatic payment scheduled", "Your automatic payment of $45.00 is scheduled for November 30. No action is needed."),
+        ("Your credit card statement", "Your credit card statement for October is now available. Minimum payment due: $35.00."),
+        ("Appointment reminder", "This is a reminder that you have an appointment scheduled for tomorrow at 2:00 PM."),
+        ("Your appointment is confirmed", "Your appointment on November 18 at 10:00 AM has been confirmed. Please arrive 10 minutes early."),
+        ("Your reservation is confirmed", "Your reservation at The Grand Hotel for November 22-24 is confirmed. Check-in begins at 3:00 PM."),
+        ("Booking confirmation", "Your booking is confirmed. Check-in opens 24 hours before departure. Have a great trip!"),
+        ("Your subscription renews soon", "Just a heads up — your annual subscription renews in 7 days. No action needed if you would like to continue."),
+        ("Subscription renewal confirmation", "Your subscription has been renewed for another year. Your next renewal date is November 1, 2025."),
+        ("Your membership has been renewed", "Thank you — your membership has been renewed through December 31, 2025."),
+        ("Welcome to your new account", "Thanks for signing up. Your account is ready to use. Feel free to explore at your own pace."),
+        ("Receipt for your purchase", "Thank you for your purchase. Your receipt is attached for your records."),
+        ("Meeting notes from today", "Hi team, attached are the notes from today's meeting. Let me know if anything needs correction."),
+        ("Quarterly report available", "The Q3 report is now available in the shared folder. Please review before Friday's meeting."),
+        ("Thanks for contacting support", "We received your message and will get back to you within one business day. Thank you for your patience."),
+        ("Your flight is confirmed", "Your flight from Atlanta to New York on November 25 is confirmed. Boarding begins at 6:45 AM."),
+        ("Hotel booking confirmed", "Your hotel reservation at Marriott Downtown for 2 nights starting December 1 is confirmed."),
+        ("Your timesheet has been approved", "Your timesheet for the week of November 11 has been approved by your manager."),
+        ("Payroll processed", "Your payroll for the period ending November 15 has been processed. Your direct deposit will arrive Friday."),
+        ("Your expense report was approved", "Your expense report submitted on November 10 has been approved. Reimbursement will be processed this week."),
+        ("Your lab results are ready", "Your recent lab results are now available in your patient portal. Log in to review them with your provider."),
+        ("New comment on your post", "Someone left a comment on your post. Log in to reply or manage your notifications."),
+        ("Your report is ready", "The report you requested has been generated and is ready to download from your account."),
+        ("Re: project update", "Thanks for the update. The timeline looks good to me. Let us sync next week to confirm next steps."),
+        ("Hi, following up on our call", "It was great speaking with you earlier. As discussed I will send over the proposal by end of week."),
+        ("Your download is ready", "The file you requested is ready to download. The link will be available for the next 48 hours."),
+        ("Balance update", "Your account balance has been updated. Current balance: $3,412.87. Last transaction: $200.00 deposit."),
+        ("Your feedback has been received", "Thank you for your feedback. We take all suggestions seriously and will review your comments."),
+        ("Team update", "Hi everyone, just a quick update on the project. We are on track to meet the deadline next Friday."),
+    ]
+    rows = [{"subject": s, "body": b, "label": 0} for s, b in samples]
+    return pd.DataFrame(rows)
+
+
+def load_data() -> pd.DataFrame:
+    dfs = []
+    for csv_path in sorted(ARCHIVE_DIR.glob("*.csv")):
+        try:
+            dfs.append(_load_single_csv(csv_path))
+        except ValueError:
+            continue
+    if not dfs:
+        raise FileNotFoundError(f"No CSVs found in {ARCHIVE_DIR}/")
+
+    dfs.append(_build_consumer_clean_emails())
+    df_all = pd.concat(dfs, ignore_index=True)
+
+    # Balance: 3x clean per phishing example
+    phish_count = (df_all["label"] == 1).sum()
+    clean_cap   = phish_count * 3
+    clean_df    = df_all[df_all["label"] == 0].sample(
+        n=min(clean_cap, (df_all["label"] == 0).sum()), random_state=42
+    )
+    phish_df = df_all[df_all["label"] == 1]
+    df_all = pd.concat([clean_df, phish_df]).sample(frac=1, random_state=42).reset_index(drop=True)
+
+    print(f"Training data: {len(df_all)} rows | "
+          f"clean={( df_all['label']==0).sum()} | "
+          f"phish={(df_all['label']==1).sum()}")
+    return df_all
+
+
+# ─── TRAINING ───────────────────────────────────────────────
+
+def train():
+    print("Loading data...")
+    df = load_data()
+    texts  = (df["subject"].fillna("") + " [SEP] " + df["body"].fillna("")).tolist()
     labels = df["label"].tolist()
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
-
-    # Stratified split
-    n = len(texts)
-    indices = np.arange(n)
-    np.random.seed(42)
-    np.random.shuffle(indices)
-    n_val = int(n * val_ratio)
-    val_idx = set(indices[:n_val])
-    train_texts = [texts[i] for i in indices[n_val:]]
-    train_labels = [labels[i] for i in indices[n_val:]]
-    val_texts = [texts[i] for i in indices[:n_val]]
-    val_labels = [labels[i] for i in indices[:n_val]]
-
-    train_ds = PhishingDataset(train_texts, train_labels, tokenizer)
-    val_ds = PhishingDataset(val_texts, val_labels, tokenizer)
-
-    num_training_steps = (len(train_ds) // train_batch_size) * num_epochs
-    warmup_steps = max(1, int(0.1 * num_training_steps))
-
-    training_args = TrainingArguments(
-        output_dir=str(model_dir / "runs"),
-        num_train_epochs=num_epochs,
-        per_device_train_batch_size=train_batch_size,
-        per_device_eval_batch_size=eval_batch_size,
-        learning_rate=learning_rate,
-        warmup_steps=warmup_steps,
-        weight_decay=0.01,
-        logging_steps=100,
-        eval_strategy="epoch",
-        save_strategy="epoch",
-        load_best_model_at_end=True,
-        metric_for_best_model="roc_auc",
-        greater_is_better=True,
+    X_train, X_test, y_train, y_test = train_test_split(
+        texts, labels, test_size=0.2, random_state=42, stratify=labels
     )
 
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_ds,
-        eval_dataset=val_ds,
-        compute_metrics=compute_metrics,
+    print("Loading DistilBERT tokenizer and model...")
+    tokenizer = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
+    model     = DistilBertForSequenceClassification.from_pretrained(
+        "distilbert-base-uncased", num_labels=2
+    )
+    model.to(DEVICE)
+
+    print("Tokenizing...")
+    train_dataset = EmailDataset(X_train, y_train, tokenizer, MAX_LEN)
+    test_dataset  = EmailDataset(X_test,  y_test,  tokenizer, MAX_LEN)
+
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    test_loader  = DataLoader(test_dataset,  batch_size=BATCH_SIZE)
+
+    optimizer = AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.01)
+    total_steps = len(train_loader) * EPOCHS
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=total_steps // 10,
+        num_training_steps=total_steps,
     )
 
-    trainer.train()
-    trainer.save_model(str(model_dir))
-    tokenizer.save_pretrained(str(model_dir))
+    print(f"\nFine-tuning DistilBERT for {EPOCHS} epochs on CPU...")
+    print("This will take 30-60 minutes on CPU with 32GB RAM. Please wait.\n")
 
-    # Final eval and classification report
-    out = trainer.predict(val_ds)
-    preds = np.argmax(out.predictions, axis=1)
-    probs = out.predictions[:, 1]
-    print("\n=== Evaluation on validation set ===")
-    print(classification_report(val_labels, preds, digits=3))
-    print(f"ROC AUC: {roc_auc_score(val_labels, probs):.3f}")
-    print(f"\nModel and tokenizer saved to {model_dir.resolve()}")
+    for epoch in range(EPOCHS):
+        model.train()
+        total_loss = 0
+        for step, batch in enumerate(train_loader):
+            optimizer.zero_grad()
+            outputs = model(
+                input_ids=batch["input_ids"].to(DEVICE),
+                attention_mask=batch["attention_mask"].to(DEVICE),
+                labels=batch["labels"].to(DEVICE),
+            )
+            loss = outputs.loss
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+            scheduler.step()
+            total_loss += loss.item()
 
+            if step % 50 == 0:
+                print(f"  Epoch {epoch+1}/{EPOCHS} | Step {step}/{len(train_loader)} | Loss: {loss.item():.4f}")
 
-def predict_and_explain(
-    model_dir: Path,
-    subject: str,
-    body: str,
-    top_k_tokens: int = 15,
-) -> Tuple[float, List[Tuple[str, float]]]:
-    """
-    Return (phishing_probability, list of (token, attention_weight) for explanation).
-    """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokenizer = AutoTokenizer.from_pretrained(str(model_dir))
-    # Use eager attention so output_attentions=True returns weights (SDPA doesn't)
-    try:
-        model = AutoModelForSequenceClassification.from_pretrained(
-            str(model_dir), attn_implementation="eager"
-        )
-    except TypeError:
-        model = AutoModelForSequenceClassification.from_pretrained(str(model_dir))
-    model.to(device)
+        avg_loss = total_loss / len(train_loader)
+        print(f"Epoch {epoch+1} complete. Avg loss: {avg_loss:.4f}\n")
+
+    # Evaluation
+    print("Evaluating on hold-out set...")
     model.eval()
-
-    text = (subject or "").strip() + " " + (body or "").strip()
-    text = text.strip() or " "
-    enc = tokenizer(
-        text,
-        truncation=True,
-        max_length=MAX_LENGTH,
-        padding="max_length",
-        return_tensors="pt",
-    )
-    input_ids = enc["input_ids"].to(device)
-    attention_mask = enc["attention_mask"].to(device)
+    all_preds, all_probs, all_labels = [], [], []
 
     with torch.no_grad():
-        out = model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            output_attentions=True,
-        )
-    logits = out.logits
-    probs = torch.softmax(logits, dim=-1)
-    phishing_prob = probs[0, 1].item()
+        for batch in test_loader:
+            outputs = model(
+                input_ids=batch["input_ids"].to(DEVICE),
+                attention_mask=batch["attention_mask"].to(DEVICE),
+            )
+            probs = torch.softmax(outputs.logits, dim=1)[:, 1].cpu().numpy()
+            preds = (probs >= 0.5).astype(int)
+            all_probs.extend(probs)
+            all_preds.extend(preds)
+            all_labels.extend(batch["labels"].numpy())
 
-    token_weights: List[Tuple[str, float]] = []
-    if out.attentions and len(out.attentions) > 0:
-        # Explanation: last layer attention to [CLS] (index 0)
-        last_attn = out.attentions[-1][0]  # (heads, seq, seq)
-        attn_to_cls = last_attn[:, 0, :].mean(dim=0).cpu().numpy()  # (seq,)
-        tokens = tokenizer.convert_ids_to_tokens(input_ids[0].cpu().tolist())
-        for tok, w in zip(tokens, attn_to_cls):
-            if tok in ("[CLS]", "[SEP]", "[PAD]") or not tok.strip():
-                continue
-            token_weights.append((tok, float(w)))
-        token_weights.sort(key=lambda x: -x[1])
-        token_weights = token_weights[:top_k_tokens]
+    print("\n=== Evaluation on hold-out set ===")
+    print(classification_report(all_labels, all_preds, digits=3))
+    print(f"ROC AUC: {roc_auc_score(all_labels, all_probs):.3f}")
 
-    return phishing_prob, token_weights
+    # Save model and tokenizer
+    print(f"\nSaving model to {MODEL_DIR.resolve()}...")
+    model.save_pretrained(MODEL_DIR)
+    tokenizer.save_pretrained(MODEL_DIR)
+    print("Done. Model saved.")
 
 
-def explain_email(
-    model_dir: Path = MODEL_DIR,
-    subject: str = "",
-    body: str = "",
-    top_k: int = 15,
-) -> None:
-    if not model_dir.exists():
-        raise FileNotFoundError(
-            f"Model dir not found at {model_dir.resolve()}. "
-            "Train first: python phishing_distilbert.py train"
-        )
-    prob, token_weights = predict_and_explain(model_dir, subject, body, top_k_tokens=top_k)
-    print(f"Phishing probability: {prob:.3f}")
-    print("\nReasons (tokens the model attended to most when deciding):")
-    if not token_weights:
-        print("  (Token-level explanation not available.)")
-    for tok, w in token_weights:
-        print(f"  '{tok}': attention weight {w:.4f}")
+# ─── PREDICTION (for testing from command line) ──────────────
+
+def predict_single(subject: str, body: str) -> float:
+    tokenizer = DistilBertTokenizerFast.from_pretrained(str(MODEL_DIR))
+    model     = DistilBertForSequenceClassification.from_pretrained(str(MODEL_DIR))
+    model.eval()
+
+    text = subject + " [SEP] " + body
+    inputs = tokenizer(text, return_tensors="pt", truncation=True,
+                       padding=True, max_length=MAX_LEN)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        proba = torch.softmax(outputs.logits, dim=1)[0, 1].item()
+
+    print(f"Phishing probability: {proba:.3f}")
+    return proba
 
 
-def parse_args() -> argparse.Namespace:
+# ─── CLI ────────────────────────────────────────────────────
+
+def parse_args():
     p = argparse.ArgumentParser(description="DistilBERT phishing classifier")
     sub = p.add_subparsers(dest="command", required=True)
 
-    train_p = sub.add_parser("train", help="Train DistilBERT on Data.csv")
-    train_p.add_argument("--data", type=str, default=str(DATA_FILE))
-    train_p.add_argument("--model-dir", type=str, default=str(MODEL_DIR))
-    train_p.add_argument("--model-name", type=str, default=DEFAULT_MODEL_NAME)
-    train_p.add_argument("--max-samples", type=int, default=None, help="Cap training size (e.g. 100000)")
-    train_p.add_argument("--batch-size", type=int, default=16)
-    train_p.add_argument("--epochs", type=int, default=2)
-    train_p.add_argument("--lr", type=float, default=2e-5)
-    train_p.add_argument("--val-ratio", type=float, default=0.1)
+    sub.add_parser("train", help="Fine-tune DistilBERT and save to ./model/")
 
-    explain_p = sub.add_parser("explain", help="Get probability and token-level explanation")
-    explain_p.add_argument("--subject", type=str, required=True)
-    explain_p.add_argument("--body", type=str, required=True)
-    explain_p.add_argument("--model-dir", type=str, default=str(MODEL_DIR))
-    explain_p.add_argument("--top-k", type=int, default=15)
+    exp = sub.add_parser("explain", help="Predict a single email")
+    exp.add_argument("--subject", type=str, required=True)
+    exp.add_argument("--body",    type=str, required=True)
 
     return p.parse_args()
 
 
-def main() -> None:
+def main():
     args = parse_args()
     if args.command == "train":
-        train_model(
-            csv_path=Path(args.data),
-            model_dir=Path(args.model_dir),
-            model_name=args.model_name,
-            max_samples=args.max_samples,
-            train_batch_size=args.batch_size,
-            num_epochs=args.epochs,
-            learning_rate=args.lr,
-            val_ratio=args.val_ratio,
-        )
+        train()
     elif args.command == "explain":
-        explain_email(
-            model_dir=Path(args.model_dir),
-            subject=args.subject,
-            body=args.body,
-            top_k=args.top_k,
-        )
-    else:
-        raise ValueError(f"Unknown command: {args.command}")
+        predict_single(args.subject, args.body)
 
 
 if __name__ == "__main__":

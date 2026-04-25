@@ -1,63 +1,68 @@
 <!DOCTYPE html>
-<html lang = "en">
+<html lang="en">
     <head>
-        <meta charset= "UTF-8">
-        <title> Findings</title>
-        <link rel ="stylesheet" href = "resultpage.css">
+        <meta charset="UTF-8">
+        <title>Findings — Phishly</title>
+        <link rel="stylesheet" href="resultpage.css">
     </head>
     <body>
-        <div id = "result-page-heading">
-            <h1>Findings</h1>
-        </div>
-        <div class = "risk-meter">
-            <div class = "risk-meter-labels">
-                <span>Low (0%)</span>
-                <span>Moderate</span>
-                <span>High</span>
-                <span>Critical (100%)</span>
-            </div>
-            <div class = "risk-meter-bar">
-                <div class = "risk-meter-fill" id="risk-fill"></div>
-                <div class = "risk-meter-needle" id="risk-needle">
-                    <span class="needle-label" id="needle-label">0%</span>
-                </div>
+ 
+        <!-- Loading overlay -->
+        <div id="loading-overlay">
+            <div id="loading-content">
+                <div id="loading-spinner"></div>
+                <p id="loading-message">Analyzing...</p>
             </div>
         </div>
-        <h2>
-            Signals Breakdowns:
-        </h2>
-        <div class = "signal-breakdown">
-            <div class= "signal-row">
-                <div id ="sender">
-                </div>
+ 
+        <!-- Results -->
+        <div id="results-container" style="display:none;" class="page-wrapper">
+ 
+            <div class="header">
+                <h1>Phishly — Findings</h1>
             </div>
-             <div class= "signal-row">
-                <div id = "subject">
+ 
+            <!-- Risk meter -->
+            <div class="risk-meter-wrapper">
+                <div class="risk-meter-bar">
+                    <div class="risk-meter-needle" id="risk-needle">
+                        <span class="needle-label" id="needle-label">Clean</span>
+                    </div>
                 </div>
-             </div>
-            <div class= "signal-row">
-                <div id="Suspicious Links">
+                <div class="risk-meter-labels">
+                    <span>Clean</span>
+                    <span>Low</span>
+                    <span>Moderate</span>
+                    <span>High</span>
+                    <span>Critical</span>
                 </div>
+                
             </div>
-            <div class= "signal-row">
-                <div id="Suspicious Texts">
-                </div>
+ 
+            <!-- Coverage -->
+            <div id="coverage-summary"></div>
+ 
+            <!-- Signal cards -->
+            <div class="section-label">Signal Breakdown</div>
+            <div class="signal-breakdown">
+                <div class="signal-row"><div id="sender"></div></div>
+                <div class="signal-row"><div id="content-analysis"></div></div>
+                <div class="signal-row"><div id="Suspicious Links"></div></div>
             </div>
+ 
+            <!-- User context -->
+            <div class="section-label">User-Provided Context</div>
+            <p id="user-context-breakdown-text"></p>
+ 
+            <!-- Summary -->
+            <div class="section-label" style="margin-top:24px;">What This Means</div>
+            <p id="what-this-means-text"></p>
+ 
+            <button id="go_back" type="button">Go back</button>
+ 
         </div>
-        <h2>
-            User-Provided Context Summary:
-        </h2>
-        <p id ="user-context-breakdown-text">
-            Recap on what the checkboxes the user selected and what each box means in the context of the assessment.
-        </p>
-        <h2>
-            What this Means:
-        </h2>
-        <p id ="what-this-means-text">
-            2-3 sentences in plain-language for synthesizing the signals. (Non-technical user explanation)        </p>
-        <div>
-            <button id="go_back" type = "button">Go back</button>
-        </div>
-        <script src ="resultpage.js"></script>
+ 
+        <script src="config.js"></script>
+        <script src="resultpage.js"></script>
     </body>
 </html>

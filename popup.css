@@ -1,0 +1,479 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+    --bg:        #0d0d12;
+    --surface:   #16161f;
+    --surface2:  #1e1e2a;
+    --border:    #2a2a3a;
+    --border2:   #3a3a50;
+    --text:      #e2e8f0;
+    --muted:     #6b7280;
+    --accent:    #e53e3e;
+    --accent2:   #fc8181;
+    --radius:    6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    width: 420px;
+    min-height: 200px;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    overflow-x: hidden;
+}
+
+/* ── Views ── */
+.view {
+    padding: 20px;
+}
+
+/* ── Header ── */
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: var(--text);
+}
+
+.header h1 span {
+    color: var(--accent);
+}
+
+.header p {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 300;
+    line-height: 1.5;
+}
+
+/* ── Section label ── */
+.section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    margin-top: 16px;
+}
+
+/* ── Divider ── */
+.divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+}
+
+/* ── Input rows ── */
+.risk-signals {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.risk-row {
+    display: flex;
+    align-items: flex-start;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    transition: border-color 0.15s;
+}
+
+.risk-row:focus-within {
+    border-color: var(--border2);
+}
+
+.label-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    min-width: 48px;
+    padding-top: 2px;
+    flex-shrink: 0;
+}
+
+.risk-row input,
+.risk-row textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.5;
+    padding-left: 10px;
+}
+
+.risk-row input::placeholder,
+.risk-row textarea::placeholder {
+    color: var(--border2);
+}
+
+/* ── Checkboxes ── */
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+}
+
+.checkbox-item:hover {
+    border-color: var(--border2);
+    background: var(--surface2);
+}
+
+.checkbox-item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid var(--border2);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.checkbox-item input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.checkbox-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 1px;
+    width: 4px;
+    height: 7px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}
+
+.checkbox-item label {
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 400;
+}
+
+/* ── Analyze button ── */
+#analyze_button {
+    width: 100%;
+    margin-top: 16px;
+    padding: 11px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+#analyze_button:hover { background: var(--accent2); }
+
+/* ── Loading view ── */
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 200px;
+}
+
+.loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-message {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+}
+
+/* ── Risk meter ── */
+.risk-meter-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 16px 14px;
+    margin-bottom: 10px;
+}
+
+.risk-meter-bar {
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(to right, #22c55e, #84cc16, #eab308, #f97316, #ef4444);
+    position: relative;
+    margin-bottom: 6px;
+}
+
+.risk-meter-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 6px;
+}
+
+.risk-meter-needle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 20px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.needle-label {
+    position: absolute;
+    top: -26px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    background: var(--surface2);
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+}
+
+/* ── Coverage ── */
+#coverage-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+#coverage-summary strong { color: var(--text); font-weight: 500; }
+#coverage-summary ul { margin: 4px 0 0 14px; }
+#coverage-summary p + p { margin-top: 3px; }
+
+/* ── Signal cards ── */
+.signal-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.signal-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    transition: border-color 0.15s;
+}
+
+.signal-row:hover { border-color: var(--border2); }
+
+.signal-row h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+    margin: 0;
+}
+
+.risk-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+}
+
+.badge-clean    { background: rgba(34,197,94,0.12);   color: #22c55e; }
+.badge-low      { background: rgba(132,204,22,0.12);  color: #84cc16; }
+.badge-moderate { background: rgba(234,179,8,0.12);   color: #eab308; }
+.badge-high     { background: rgba(249,115,22,0.12);  color: #f97316; }
+.badge-critical { background: rgba(239,68,68,0.12);   color: #ef4444; }
+.badge-na       { background: rgba(107,114,128,0.12); color: #6b7280; }
+
+.signal-row ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.signal-row ul li {
+    font-size: 11px;
+    color: #94a3b8;
+    padding-left: 12px;
+    position: relative;
+    line-height: 1.5;
+}
+
+.signal-row ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--border2);
+    font-size: 10px;
+    top: 1px;
+}
+
+.signal-row h4 {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 10px 0 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.link-entry {
+    font-size: 10px;
+    color: #94a3b8;
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 5px 8px;
+    margin-top: 3px;
+    word-break: break-all;
+    border: 1px solid var(--border);
+}
+
+.indicator {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.green  { background: #22c55e; }
+.yellow { background: #eab308; }
+.red    { background: #ef4444; }
+.orange { background: #f97316; }
+.gray   { background: #6b7280; }
+
+/* ── Context / summary boxes ── */
+#user-context-breakdown-text,
+#what-this-means-text {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    font-size: 12px;
+    color: #94a3b8;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin-bottom: 6px;
+}
+
+#user-context-breakdown-text ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#user-context-breakdown-text ul li {
+    padding-left: 12px;
+    position: relative;
+    font-size: 11px;
+}
+
+#user-context-breakdown-text ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--border2);
+    font-size: 10px;
+}
+
+/* ── Go back button ── */
+#go_back {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+#go_back:hover {
+    border-color: var(--border2);
+    color: var(--text);
+}

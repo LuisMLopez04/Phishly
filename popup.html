@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phishly</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+    <!-- ── MAIN VIEW ─────────────────────────────────────────── -->
+    <div id="view-main" class="view">
+
+        <div class="header">
+            <h1>Phish<span>ly</span></h1>
+            <p>Paste details from a suspicious email to analyze it for phishing signals.</p>
+        </div>
+
+        <div class="section-label">Risk Signals</div>
+        <div class="risk-signals">
+            <div class="risk-row">
+                <span class="label-text">Sender</span>
+                <input type="text" id="sender" placeholder="Email or phone (e.g. +14049551283)"/>
+            </div>
+            <div class="risk-row">
+                <span class="label-text">Subject</span>
+                <textarea id="subject" rows="1"></textarea>
+            </div>
+            <div class="risk-row">
+                <span class="label-text">Body</span>
+                <textarea id="sus_texts" rows="3" placeholder="Paste the email body here..."></textarea>
+            </div>
+            <div class="risk-row">
+                <span class="label-text">Links</span>
+                <textarea id="sus_links" rows="2" placeholder="One link per line..."></textarea>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section-label">User Context Signals</div>
+        <div class="checkbox-grid">
+            <div class="checkbox-item">
+                <input type="checkbox" id="urgent_checkbox"/>
+                <label for="urgent_checkbox">Urgent Language</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="sens_info"/>
+                <label for="sens_info">Sensitive Info</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="une_send"/>
+                <label for="une_send">Unexpected Sender</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="une_att"/>
+                <label for="une_att">Unexpected Attachment</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="asks_login"/>
+                <label for="asks_login">Asks to Login</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="qr_code"/>
+                <label for="qr_code">QR Code Present</label>
+            </div>
+        </div>
+
+        <button id="analyze_button" type="button">Analyze</button>
+
+    </div>
+
+    <!-- ── LOADING VIEW ──────────────────────────────────────── -->
+    <div id="view-loading" class="view" style="display:none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-message" id="loading-message">Analyzing...</p>
+        </div>
+    </div>
+
+    <!-- ── RESULTS VIEW ──────────────────────────────────────── -->
+    <div id="view-results" class="view" style="display:none;">
+
+        <div class="header">
+            <h1 style="font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--muted);">
+                Phishly — Findings
+            </h1>
+        </div>
+
+        <!-- Risk meter -->
+        <div class="risk-meter-wrapper">
+            <div class="risk-meter-bar">
+                <div class="risk-meter-needle" id="risk-needle">
+                    <span class="needle-label" id="needle-label">Clean</span>
+                </div>
+            </div>
+            <div class="risk-meter-labels">
+                <span>Clean</span>
+                <span>Low</span>
+                <span>Moderate</span>
+                <span>High</span>
+                <span>Critical</span>
+            </div>
+        </div>
+
+        <!-- Coverage -->
+        <div id="coverage-summary"></div>
+
+        <!-- Signal cards -->
+        <div class="section-label">Signal Breakdown</div>
+        <div class="signal-breakdown">
+            <div class="signal-row"><div id="sender-card"></div></div>
+            <div class="signal-row"><div id="content-card"></div></div>
+            <div class="signal-row"><div id="links-card"></div></div>
+        </div>
+
+        <!-- User context -->
+        <div class="section-label">User-Provided Context</div>
+        <p id="user-context-breakdown-text"></p>
+
+        <!-- Summary -->
+        <div class="section-label" style="margin-top:16px;">What This Means</div>
+        <p id="what-this-means-text"></p>
+
+        <button id="go_back" type="button">Analyze another</button>
+
+    </div>
+
+    <script src="config.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Large model files
+model/model.safetensors
+
+# Training datasets
+archive/
+
+# Secrets
+.env
+
+# Old models
+*.joblib
+
+# Python cache
+__pycache__/
+*.pyc

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phishly — Demo Inbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0d0d12;
+    --surface:  #16161f;
+    --surface2: #1e1e2a;
+    --surface3: #252535;
+    --border:   #2a2a3a;
+    --border2:  #3a3a50;
+    --text:     #e2e8f0;
+    --muted:    #6b7280;
+    --muted2:   #4a5060;
+    --accent:   #e53e3e;
+    --accent2:  #fc8181;
+    --radius:   6px;
+
+    --risk-clean:    #22c55e;
+    --risk-low:      #84cc16;
+    --risk-moderate: #eab308;
+    --risk-high:     #f97316;
+    --risk-critical: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .topbar-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .topbar-brand span { color: var(--accent); }
+
+  .topbar-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  .topbar-hint {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .topbar-hint strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 180px 320px 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+  }
+
+  .sidebar-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted2);
+    padding: 8px 16px 4px;
+    margin-top: 8px;
+  }
+
+  .sidebar-label:first-child { margin-top: 0; }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 16px;
+    cursor: pointer;
+    border-radius: 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 400;
+    transition: background 0.1s, color 0.1s;
+    position: relative;
+  }
+
+  .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+
+  .sidebar-item.active {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  .sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+  }
+
+  .sidebar-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .sidebar-item.active .sidebar-icon { opacity: 1; }
+
+  .sidebar-badge {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .sidebar-badge.gray {
+    background: var(--surface3);
+    color: var(--muted);
+  }
+
+  /* ── EMAIL LIST ── */
+  .email-list {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .list-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .list-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .list-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .email-items {
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .email-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+  }
+
+  .email-item:hover { background: var(--surface2); }
+
+  .email-item.selected {
+    background: var(--surface2);
+    border-left: 2px solid var(--accent);
+    padding-left: 12px;
+  }
+
+  .email-item.unread .email-sender {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .email-item.unread .email-subject {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .email-row1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .risk-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .email-sender {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .email-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted2);
+    flex-shrink: 0;
+  }
+
+  .email-subject {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+
+  .email-preview {
+    font-size: 11px;
+    color: var(--muted2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── READING PANE ── */
+  .reading-pane {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .reading-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--muted2);
+  }
+
+  .reading-empty-icon {
+    font-size: 36px;
+    opacity: 0.3;
+  }
+
+  .reading-empty p {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .reading-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .reading-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .reading-subject {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .reading-meta {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .reading-from {
+    flex: 1;
+  }
+
+  .reading-from-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .reading-from-addr {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .reading-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted2);
+  }
+
+  .reading-body {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #94a3b8;
+    white-space: pre-wrap;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .reading-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  /* ── ANALYZE BUTTON ── */
+  .analyze-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .analyze-btn:hover { background: var(--accent2); }
+  .analyze-btn:active { transform: scale(0.98); }
+
+  .analyze-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .footer-hint {
+    font-size: 11px;
+    color: var(--muted2);
+    line-height: 1.5;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .toast-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--risk-clean);
+    animation: blink 1s ease-in-out 3;
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ── RISK LABEL PILL (in reading header) ── */
+  .risk-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 3px 9px;
+    border-radius: 3px;
+    margin-left: auto;
+  }
+
+  .pill-clean    { background: rgba(34,197,94,0.12);   color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+  .pill-moderate { background: rgba(234,179,8,0.12);   color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
+  .pill-high     { background: rgba(249,115,22,0.12);  color: #f97316; border: 1px solid rgba(249,115,22,0.2); }
+  .pill-critical { background: rgba(239,68,68,0.12);   color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+
+  /* ── SCROLLBARS ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── DEMO BANNER ── */
+  .demo-banner {
+    background: linear-gradient(90deg, rgba(229,62,62,0.08), rgba(229,62,62,0.04));
+    border-bottom: 1px solid rgba(229,62,62,0.2);
+    padding: 7px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .demo-banner-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  .demo-banner p {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .demo-banner p strong {
+    color: var(--accent2);
+    font-weight: 700;
+  }
+
+  /* ── LINKS BADGE ── */
+  .links-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 7px;
+  }
+
+  .links-tag svg { width: 10px; height: 10px; opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="topbar-brand">Phish<span>ly</span></div>
+    <div class="topbar-tag">Demo Inbox</div>
+  </div>
+  <div class="topbar-hint">
+    <strong>Select an email</strong> then click Analyze in Phishly →
+  </div>
+</div>
+
+<!-- DEMO BANNER -->
+<div class="demo-banner">
+  <div class="demo-banner-dot"></div>
+  <p>This is a <strong>simulated inbox</strong> containing 6 curated test emails — 2 legitimate, 2 phishing, 1 QR code attack, and 1 edge case. Click any email, then hit the red button.</p>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Mailboxes</div>
+    <div class="sidebar-item active">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 3h14v10H1V3z" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      Inbox
+      <span class="sidebar-badge">4</span>
+    </div>
+    <div class="sidebar-item">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 1l1.8 3.6L14 5.6l-3 2.9.7 4.1L8 10.6l-3.7 2 .7-4.1-3-2.9 4.2-.6L8 1z" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      Starred
+      <span class="sidebar-badge gray">0</span>
+    </div>
+    <div class="sidebar-item">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M8 5v4l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      Sent
+      <span class="sidebar-badge gray">12</span>
+    </div>
+    <div class="sidebar-item">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      Spam
+      <span class="sidebar-badge">2</span>
+    </div>
+    <div class="sidebar-item">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 3h10l-1 10H4L3 3z" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M1 3h14M6 3V2h4v1" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      Trash
+      <span class="sidebar-badge gray">5</span>
+    </div>
+
+    <div class="sidebar-label">Demo Scenarios</div>
+    <div class="sidebar-item" data-email="0">
+      <div class="risk-dot" style="background:var(--risk-clean)"></div>
+      Legitimate #1
+    </div>
+    <div class="sidebar-item" data-email="1">
+      <div class="risk-dot" style="background:var(--risk-moderate)"></div>
+      Edge Case
+    </div>
+    <div class="sidebar-item" data-email="2">
+      <div class="risk-dot" style="background:var(--risk-high)"></div>
+      Phishing #1
+    </div>
+    <div class="sidebar-item" data-email="3">
+      <div class="risk-dot" style="background:var(--risk-high)"></div>
+      Phishing #2
+    </div>
+    <div class="sidebar-item" data-email="4">
+      <div class="risk-dot" style="background:var(--risk-critical)"></div>
+      Critical Hit
+    </div>
+    <div class="sidebar-item" data-email="5">
+      <div class="risk-dot" style="background:var(--risk-high)"></div>
+      QR Code Attack
+    </div>
+    </div>
+
+  <!-- EMAIL LIST -->
+  <div class="email-list">
+    <div class="list-header">
+      <span class="list-title">Inbox</span>
+      <span class="list-count">6 messages</span>
+    </div>
+    <div class="email-items" id="email-list-items">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- READING PANE -->
+  <div class="reading-pane" id="reading-pane">
+    <div class="reading-empty" id="reading-empty">
+      <div class="reading-empty-icon">✉</div>
+      <p>Select a message</p>
+    </div>
+    <div class="reading-content" id="reading-content" style="display:none;">
+      <div class="reading-header">
+        <div class="reading-subject" id="r-subject"></div>
+        <div class="reading-meta">
+          <div class="avatar" id="r-avatar"></div>
+          <div class="reading-from">
+            <div class="reading-from-name" id="r-name"></div>
+            <div class="reading-from-addr" id="r-addr"></div>
+          </div>
+          <div class="reading-date" id="r-date"></div>
+          <div class="risk-pill" id="r-pill"></div>
+        </div>
+      </div>
+      <div class="reading-body" id="r-body"></div>
+      <div class="reading-footer">
+        <button class="analyze-btn" id="analyze-btn">
+          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="7" cy="7" r="6" stroke="white" stroke-width="1.3"/>
+            <path d="M7 4v4" stroke="white" stroke-width="1.3" stroke-linecap="round"/>
+            <circle cx="7" cy="10" r="0.6" fill="white"/>
+          </svg>
+          Analyze in Phishly
+        </button>
+        <div class="footer-hint" id="r-links-hint"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toast-msg">Data loaded — open the Phishly extension</span>
+</div>
+
+<script src = "demo.js"></script>
+</body>
+</html>

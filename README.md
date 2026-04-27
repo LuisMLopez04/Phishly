@@ -167,6 +167,18 @@ Phishly uses a fine-tuned **DistilBERT** model trained on a curated dataset of r
 
 ---
 
+## Model Performance
+
+Evaluated on a held-out test set across all training datasets:
+
+| Metric | Clean | Phishing |
+|---|---|---|
+| Precision | 99.7% | 98.8% |
+| Recall | 99.6% | 99.1% |
+| F1 | 99.6% | 98.9% |
+
+**ROC AUC: 1.000**
+
 ## Tech Stack
 
 | Layer | Technology |

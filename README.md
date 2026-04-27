@@ -146,7 +146,7 @@ The server runs on `http://127.0.0.1:5001` and must be running for analysis to w
 The overall risk is calculated using a blended score of compounding evidence and weighted averages across all provided signals. Missing signals are excluded from the calculation — the score always reflects only what was actually analyzed.
 
 **Hard overrides:**
-- Google Safe Browsing hit → always Critical
+- Virus Total or Google Safe Browsing hit → always Critical
 - Disposable email on a new domain → minimum High
 - API-verified clean sender → capped at High maximum
 
